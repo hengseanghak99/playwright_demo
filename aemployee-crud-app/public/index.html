@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Employee List</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2em; background: #f7f7f7; }
+    .employee { background: #fff; padding: 10px; margin: 10px 0; border-left: 5px solid #007BFF; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .pagination { margin-top: 20px; text-align: center; }
+    .pagination button {
+      margin: 0 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+      border: 1px solid #007BFF;
+      background-color: #fff;
+      color: #007BFF;
+      border-radius: 4px;
+    }
+    .pagination button.active {
+      background-color: #007BFF;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Employee List</h1>
+  <div id="employeeList">Loading...</div>
+  <div class="pagination" id="paginationControls"></div>
+
+  <script>
+    const API_URL = 'https://seanghaktest.free.beeceptor.com/api/employees';
+    const PAGE_SIZE = 10;
+    let currentPage = 1;
+    let employees = [];
+
+    async function fetchEmployees() {
+      const res = await fetch(API_URL);
+      if (!res.ok) throw new Error('Failed to fetch data');
+      employees = await res.json();
+      renderPage(currentPage);
+      setupPagination();
+    }
+
+    function renderPage(page) {
+      const list = document.getElementById('employeeList');
+      list.innerHTML = '';
+
+      const start = (page - 1) * PAGE_SIZE;
+      const end = start + PAGE_SIZE;
+      const currentData = employees.slice(start, end);
+
+      if (currentData.length === 0) {
+        list.innerHTML = '<p>No employees found.</p>';
+        return;
+      }
+
+      currentData.forEach(emp => {
+        list.innerHTML += `
+          <div class="employee">
+            <p><strong>ID:</strong> ${emp.id}</p>
+            <p><strong>Name:</strong> ${emp.name}</p>
+            <p><strong>Position:</strong> ${emp.position}</p>
+          </div>
+        `;
+      });
+    }
+
+    function setupPagination() {
+      const totalPages = Math.ceil(employees.length / PAGE_SIZE);
+      const pagination = document.getElementById('paginationControls');
+      pagination.innerHTML = '';
+
+      if (totalPages <= 1) return;
+
+      for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement('button');
+        btn.textContent = i;
+        if (i === currentPage) btn.classList.add('active');
+        btn.addEventListener('click', () => {
+          currentPage = i;
+          renderPage(currentPage);
+          setupPagination();
+        });
+        pagination.appendChild(btn);
+      }
+    }
+
+    // Initial load
+    fetchEmployees().catch(err => {
+      document.getElementById('employeeList').innerHTML = `<p>Error: ${err.message}</p>`;
+    });
+  </script>
+</body>
+</html>
